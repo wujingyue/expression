@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 
 public class ExpressionEvaluator {
 
@@ -205,5 +206,33 @@ public class ExpressionEvaluator {
 			throw new IllegalArgumentException("Invalid expression");
 		}
 		return operandStack.getFirst();
+	}
+
+	public Expression evaluateSymbolically(String expressionString) {
+		Map<String, Integer> terms = buildExpressionFromTokens(tokenize(expressionString)).evaluateSymbolically();
+		Expression accumulation = null;
+		for (Map.Entry<String, Integer> term : terms.entrySet()) {
+			if (term.getValue() == 0) {
+				continue;
+			}
+			Expression current = new Expression(term.getValue());
+			if (!term.getKey().equals("1")) {
+				// TOOD: The coefficient can be omitted if it equals 1. E.g. "a" instead of
+				// "1*a".
+				current = new Expression('*', current, new Expression(term.getKey()));
+			}
+			if (accumulation == null) {
+				accumulation = current;
+			} else {
+				// TODO: If `term` has a negative coefficient, it would be better to connect
+				// `accumulation` and `current` with a minus sign. E.g. "a-b" instead of
+				// "a+-1*b".
+				accumulation = new Expression('+', accumulation, current);
+			}
+		}
+		if (accumulation == null) {
+			accumulation = new Expression(0);
+		}
+		return accumulation;
 	}
 }
