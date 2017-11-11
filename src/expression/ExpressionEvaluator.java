@@ -15,7 +15,6 @@ public class ExpressionEvaluator {
 		System.out.println(result);
 	}
 
-	@Deprecated
 	public int evaluateOnlyAddSub(String expression) {
 		List<String> tokens = tokenize(expression);
 
@@ -123,7 +122,6 @@ public class ExpressionEvaluator {
 		}
 	}
 
-	@Deprecated
 	public int evaluateWithoutExpressionTree(String expressionString) {
 		List<String> tokens = tokenize(expressionString);
 
