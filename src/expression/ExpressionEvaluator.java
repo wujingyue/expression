@@ -208,8 +208,13 @@ public class ExpressionEvaluator {
 		return operandStack.getFirst();
 	}
 
-	public Expression evaluateSymbolically(String expressionString) {
-		Map<String, Integer> terms = buildExpressionFromTokens(tokenize(expressionString)).evaluateSymbolically();
+	public Expression simplify(String expressionString) {
+		Expression expression = buildExpressionFromTokens(tokenize(expressionString));
+		Map<String, Integer> terms = expression.evaluateSymbolically();
+		return buildExpressionFromTerms(terms);
+	}
+
+	private Expression buildExpressionFromTerms(Map<String, Integer> terms) {
 		Expression accumulation = null;
 		for (Map.Entry<String, Integer> term : terms.entrySet()) {
 			if (term.getValue() == 0) {
@@ -234,5 +239,11 @@ public class ExpressionEvaluator {
 			accumulation = new Expression(0);
 		}
 		return accumulation;
+	}
+
+	public Expression simplifyByFlattening(String expressionString) {
+		Expression expression = buildExpressionFromTokens(tokenize(expressionString));
+		Map<String, Integer> terms = expression.flattenIntoTerms();
+		return buildExpressionFromTerms(terms);
 	}
 }

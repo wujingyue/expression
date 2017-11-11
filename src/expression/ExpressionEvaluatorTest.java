@@ -48,8 +48,11 @@ class ExpressionEvaluatorTest {
 
 	@Test
 	void testSimplification() {
-		assertEquals("1", evaluator.evaluateSymbolically("(a+b)-(a+4)-(b-5)").toString());
-		assertEquals("((-1 + (2 * a)) + (2 * b))", evaluator.evaluateSymbolically("(a+b)+(a+4)+(b-5)").toString());
+		assertEquals("1", evaluator.simplify("(a+b)-(a+4)-(b-5)").toString());
+		assertEquals("((-1 + (2 * a)) + (2 * b))", evaluator.simplify("(a+b)+(a+4)+(b-5)").toString());
+
+		assertEquals("1", evaluator.simplifyByFlattening("(a+b)-(a+4)-(b-5)").toString());
+		assertEquals("((-1 + (2 * a)) + (2 * b))", evaluator.simplifyByFlattening("(a+b)+(a+4)+(b-5)").toString());
 	}
 
 	private static ExpressionEvaluator evaluator;

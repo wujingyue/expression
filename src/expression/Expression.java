@@ -8,12 +8,12 @@ enum ExpressionType {
 }
 
 public class Expression {
-	ExpressionType type;
-	char op;
-	String varName;
-	int value;
-	Expression leftChild;
-	Expression rightChild;
+	private ExpressionType type;
+	private char op;
+	private String varName;
+	private int value;
+	private Expression leftChild;
+	private Expression rightChild;
 
 	public Expression(char op, Expression leftChild, Expression rightChild) {
 		this.type = ExpressionType.OPERATOR;
@@ -91,30 +91,55 @@ public class Expression {
 			Map<String, Integer> result = leftChild.evaluateSymbolically();
 			Map<String, Integer> rightTerms = rightChild.evaluateSymbolically();
 			switch (op) {
-			// @formatter:off
-//			case '+':
-//			case '-':
-//				rightTerms.forEach((term, coefficient) -> result.merge(term, (op == '+' ? 1 : -1) * coefficient,
-//						(c0, c1) -> c0 + c1));
-//				break;
-			// @formatter:on
 			case '+':
 				for (Map.Entry<String, Integer> rightTerm : rightTerms.entrySet()) {
 					String var = rightTerm.getKey();
-					result.put(var, result.getOrDefault(var, 0) + rightTerm.getValue());
+					int coefficient = rightTerm.getValue();
+					result.put(var, result.getOrDefault(var, 0) + coefficient);
 				}
 				break;
 			case '-':
 				for (Map.Entry<String, Integer> rightTerm : rightTerms.entrySet()) {
 					String var = rightTerm.getKey();
-					result.put(var, result.getOrDefault(var, 0) - rightTerm.getValue());
+					int coefficient = rightTerm.getValue();
+					result.put(var, result.getOrDefault(var, 0) - coefficient);
 				}
 				break;
+			// @formatter:off
+//			case '+':
+//			case '-':
+//				rightTerms.forEach((var, coefficient) -> result.put(var,
+//						result.getOrDefault(var, 0) + (op == '+' ? 1 : -1) * coefficient));
+//				break;
+			// @formatter:on
 			default:
 				throw new IllegalArgumentException(String.format("Unable to evaluate operator '%c' symbolically", op));
 			}
 			return result;
 		}
+		default:
+			throw new IllegalArgumentException(String.format("Invalid expression type '%s'", type));
+		}
+	}
+
+	public Map<String, Integer> flattenIntoTerms() {
+		Map<String, Integer> terms = new TreeMap<String, Integer>();
+		collectTerms(terms, 1);
+		return terms;
+	}
+
+	private void collectTerms(Map<String, Integer> terms, int sign) {
+		switch (type) {
+		case VARIABLE:
+			terms.put(varName, terms.getOrDefault(varName, 0) + sign);
+			break;
+		case CONSTANT:
+			terms.put("1", terms.getOrDefault("1", 0) + sign * value);
+			break;
+		case OPERATOR:
+			leftChild.collectTerms(terms, sign);
+			rightChild.collectTerms(terms, (op == '+' ? sign : -sign));
+			break;
 		default:
 			throw new IllegalArgumentException(String.format("Invalid expression type '%s'", type));
 		}
