@@ -77,13 +77,15 @@ public class ExpressionEvaluator {
 
 	private static boolean shouldPush(char op0, char op1) {
 		assert op0 != ')' : "')' should never appear in the operator stack.";
-		// + - * / ( )
+		// @formatter:off
+		//   + - * / ( )
 		// ==============
 		// + F F T T T F
 		// - F F T T T F
 		// * F F F F T F
 		// / F F F F T F
 		// ( T T T T T T
+		// @formatter:on
 		if (op0 == '(' || op1 == '(') {
 			return true;
 		}
