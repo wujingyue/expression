@@ -51,6 +51,8 @@ class ExpressionEvaluatorTest {
 		assertEquals("1", evaluator.simplify("(a+b)-(a+4)-(b-5)").toString());
 		assertEquals("((-1 + (2 * a)) + (2 * b))", evaluator.simplify("(a+b)+(a+4)+(b-5)").toString());
 
+		assertEquals("(2 * bar)", evaluator.simplify("(foo+bar)-(foo-bar)").toString());
+
 		assertEquals("1", evaluator.simplifyByFlattening("(a+b)-(a+4)-(b-5)").toString());
 		assertEquals("((-1 + (2 * a)) + (2 * b))", evaluator.simplifyByFlattening("(a+b)+(a+4)+(b-5)").toString());
 	}

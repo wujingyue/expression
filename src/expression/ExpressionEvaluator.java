@@ -2,7 +2,6 @@ package expression;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ public class ExpressionEvaluator {
 	public int evaluateOnlyAddSub(String expression) {
 		List<String> tokens = tokenize(expression);
 
-		int result = 0;
+		int accumulation = 0;
 		boolean signIsPositive = true;
 		String lastToken = null;
 		for (String token : tokens) {
@@ -27,6 +26,7 @@ public class ExpressionEvaluator {
 						String.format("Invalid expression: '%s' and '%s' should not be adjacent", lastToken, token));
 			}
 			if (isOperator(token)) {
+				assert token.length() == 1;
 				if (token.equals("+")) {
 					signIsPositive = true;
 				} else if (token.equals("-")) {
@@ -35,11 +35,11 @@ public class ExpressionEvaluator {
 					throw new IllegalArgumentException(String.format("Unrecognized operator '%s'", token));
 				}
 			} else {
-				result += Integer.parseInt(token) * (signIsPositive ? 1 : -1);
+				accumulation += Integer.parseInt(token) * (signIsPositive ? 1 : -1);
 			}
 			lastToken = token;
 		}
-		return result;
+		return accumulation;
 	}
 
 	public int evaluate(String expressionString) {
@@ -51,24 +51,37 @@ public class ExpressionEvaluator {
 		int i = 0;
 		while (i < expression.length()) {
 			char ch = expression.charAt(i);
-			if (Character.isDigit(ch)) {
+			if (isOperator(ch)) {
+				tokens.add(Character.toString(ch));
+				++i;
+			} else if (Character.isDigit(ch)) {
 				String token = "";
 				while (i < expression.length() && Character.isDigit(expression.charAt(i))) {
 					token += expression.charAt(i);
 					++i;
 				}
 				tokens.add(token);
+			} else if (Character.isLetter(ch)) {
+				String token = "";
+				while (i < expression.length() && Character.isLetterOrDigit(expression.charAt(i))) {
+					token += expression.charAt(i);
+					++i;
+				}
+				tokens.add(token);
 			} else {
-				tokens.add(Character.toString(ch));
-				++i;
+				throw new IllegalArgumentException(String.format("Char '%c' is not allowed in an expression.", ch));
 			}
 		}
 		return tokens;
 	}
 
 	private static boolean isOperator(String token) {
-		final String[] validOperators = { "+", "-", "*", "/", "(", ")" };
-		return Arrays.asList(validOperators).contains(token);
+		return token.length() == 1 && isOperator(token.charAt(0));
+	}
+
+	private static boolean isOperator(char ch) {
+		final String validOperators = "+-*/()";
+		return validOperators.indexOf(ch) >= 0;
 	}
 
 	private static boolean precedes(char op0, char op1) {
@@ -106,22 +119,25 @@ public class ExpressionEvaluator {
 		int leftChild = operandStack.removeLast();
 		char op = operatorStack.removeLast();
 
+		int result = 0;
 		switch (op) {
 		case '+':
-			operandStack.addLast(leftChild + rightChild);
+			result = leftChild + rightChild;
 			break;
 		case '-':
-			operandStack.addLast(leftChild - rightChild);
+			result = leftChild - rightChild;
 			break;
 		case '*':
-			operandStack.addLast(leftChild * rightChild);
+			result = leftChild * rightChild;
 			break;
 		case '/':
-			operandStack.addLast(leftChild / rightChild);
+			result = leftChild / rightChild;
 			break;
 		default:
 			assert false : "Operator '%c' cannot be evaluated.";
 		}
+
+		operandStack.addLast(result);
 	}
 
 	public int evaluateWithoutExpressionTree(String expressionString) {
@@ -130,22 +146,26 @@ public class ExpressionEvaluator {
 		Deque<Character> operatorStack = new ArrayDeque<Character>();
 		Deque<Integer> operandStack = new ArrayDeque<Integer>();
 		for (String token : tokens) {
-			if (isOperator(token)) {
-				assert token.length() == 1;
-				char op = token.charAt(0);
+			if (!isOperator(token)) {
+				operandStack.addLast(Integer.parseInt(token));
+				continue;
+			}
+
+			assert token.length() == 1;
+			char op = token.charAt(0);
+			if (op == ')') {
+				while (!operatorStack.isEmpty() && operatorStack.getLast() != '(') {
+					evaluateTopOperator(operatorStack, operandStack);
+				}
+				if (operatorStack.isEmpty()) {
+					throw new IllegalArgumentException("Invalid expression");
+				}
+				operatorStack.removeLast();
+			} else {
 				while (!operatorStack.isEmpty() && !shouldPush(operatorStack.getLast(), op)) {
 					evaluateTopOperator(operatorStack, operandStack);
 				}
 				operatorStack.addLast(op);
-				if (op == ')') {
-					operatorStack.removeLast();
-					if (operatorStack.isEmpty() || operatorStack.getLast() != '(') {
-						throw new IllegalArgumentException("Invalid expression");
-					}
-					operatorStack.removeLast();
-				}
-			} else {
-				operandStack.addLast(Integer.parseInt(token));
 			}
 		}
 		while (!operatorStack.isEmpty()) {
